@@ -1,8 +1,18 @@
-#ifndef clox_value_h
-#define clox_value_h
+#ifndef WIZARD_VALUE_H
+#define WIZARD_VALUE_H
 
 #include "common.h"
 
-typedef double valux;
+typedef double Valux;
+
+typedef struct {
+  int capacity;
+  int count;
+  valux* values;
+} ValuxArray;
+
+void initValuxArray(ValuxArray* array);
+void writeValuxArray(ValuxArray* array, Valux value);
+void freeValuxArray(ValuxArray* array);
 
 #endif

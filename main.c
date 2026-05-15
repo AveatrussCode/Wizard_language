@@ -8,5 +8,9 @@ int main(int argc, const char * argv[]){
     writeChunk(&chunk, OP_RETURN);
     disassembleChunk(&chunk, "test chunk");
     freeChunk(&chunk);
+
+    int constant = addConstant(&chunk, 1.2);
+    writeChunk(&chunk, OP_CONSTANT);
+    writeChunk(&chunk, constant);
     return 0;
 }
