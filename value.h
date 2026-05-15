@@ -3,6 +3,6 @@
 
 #include "common.h"
 
-typedef double Value;
+typedef double valux;
 
 #endif
