@@ -8,7 +8,7 @@ typedef double Valux;
 typedef struct {
   int capacity;
   int count;
-  valux* values;
+  Valux* values;
 } ValuxArray;
 
 void initValuxArray(ValuxArray* array);

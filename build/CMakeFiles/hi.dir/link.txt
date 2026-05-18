@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/hi.dir/main.c.o CMakeFiles/hi.dir/chunk.c.o CMakeFiles/hi.dir/debug.c.o CMakeFiles/hi.dir/memory.c.o CMakeFiles/hi.dir/value.c.o -o hi 
