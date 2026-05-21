@@ -7,4 +7,5 @@ add_executable(hi
                 debug.c
                 memory.c
                 value.c
+                vm.c
 )
