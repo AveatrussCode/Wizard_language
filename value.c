@@ -20,3 +20,6 @@ void freeValuxArray(ValuxArray* array){
     FREE_ARRAY(Valux, array->values, array->capacity);
     initValuxArray(array);
 }
+void printValue(Valux value) {
+  printf("%g", value);
+}
