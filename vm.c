@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "common.h"
+#include "debug.h"
 #include "vm.h"
 
 VM vm;
@@ -14,6 +15,9 @@ static InterpretResult run() {
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 
   for (;;) {
+    #ifdef DEBUG_TRACE_EXECUTION
+    disassembleInstruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
+    #endif
     uint8_t instruction;
     switch (instruction = READ_BYTE()) {
       case OP_CONSTANT: {
