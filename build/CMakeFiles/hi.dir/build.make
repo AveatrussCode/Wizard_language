@@ -97,10 +97,24 @@ CMakeFiles/hi.dir/chunk.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/hi.dir/chunk.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /workspaces/wizard_-language/chunk.c -o CMakeFiles/hi.dir/chunk.c.s
 
+CMakeFiles/hi.dir/compiler.c.o: CMakeFiles/hi.dir/flags.make
+CMakeFiles/hi.dir/compiler.c.o: /workspaces/wizard_-language/compiler.c
+CMakeFiles/hi.dir/compiler.c.o: CMakeFiles/hi.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/wizard_-language/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/hi.dir/compiler.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/hi.dir/compiler.c.o -MF CMakeFiles/hi.dir/compiler.c.o.d -o CMakeFiles/hi.dir/compiler.c.o -c /workspaces/wizard_-language/compiler.c
+
+CMakeFiles/hi.dir/compiler.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/hi.dir/compiler.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /workspaces/wizard_-language/compiler.c > CMakeFiles/hi.dir/compiler.c.i
+
+CMakeFiles/hi.dir/compiler.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/hi.dir/compiler.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /workspaces/wizard_-language/compiler.c -o CMakeFiles/hi.dir/compiler.c.s
+
 CMakeFiles/hi.dir/debug.c.o: CMakeFiles/hi.dir/flags.make
 CMakeFiles/hi.dir/debug.c.o: /workspaces/wizard_-language/debug.c
 CMakeFiles/hi.dir/debug.c.o: CMakeFiles/hi.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/wizard_-language/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/hi.dir/debug.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/wizard_-language/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/hi.dir/debug.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/hi.dir/debug.c.o -MF CMakeFiles/hi.dir/debug.c.o.d -o CMakeFiles/hi.dir/debug.c.o -c /workspaces/wizard_-language/debug.c
 
 CMakeFiles/hi.dir/debug.c.i: cmake_force
@@ -114,7 +128,7 @@ CMakeFiles/hi.dir/debug.c.s: cmake_force
 CMakeFiles/hi.dir/memory.c.o: CMakeFiles/hi.dir/flags.make
 CMakeFiles/hi.dir/memory.c.o: /workspaces/wizard_-language/memory.c
 CMakeFiles/hi.dir/memory.c.o: CMakeFiles/hi.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/wizard_-language/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/hi.dir/memory.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/wizard_-language/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/hi.dir/memory.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/hi.dir/memory.c.o -MF CMakeFiles/hi.dir/memory.c.o.d -o CMakeFiles/hi.dir/memory.c.o -c /workspaces/wizard_-language/memory.c
 
 CMakeFiles/hi.dir/memory.c.i: cmake_force
@@ -125,10 +139,24 @@ CMakeFiles/hi.dir/memory.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/hi.dir/memory.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /workspaces/wizard_-language/memory.c -o CMakeFiles/hi.dir/memory.c.s
 
+CMakeFiles/hi.dir/scanner.c.o: CMakeFiles/hi.dir/flags.make
+CMakeFiles/hi.dir/scanner.c.o: /workspaces/wizard_-language/scanner.c
+CMakeFiles/hi.dir/scanner.c.o: CMakeFiles/hi.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/wizard_-language/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/hi.dir/scanner.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/hi.dir/scanner.c.o -MF CMakeFiles/hi.dir/scanner.c.o.d -o CMakeFiles/hi.dir/scanner.c.o -c /workspaces/wizard_-language/scanner.c
+
+CMakeFiles/hi.dir/scanner.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/hi.dir/scanner.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /workspaces/wizard_-language/scanner.c > CMakeFiles/hi.dir/scanner.c.i
+
+CMakeFiles/hi.dir/scanner.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/hi.dir/scanner.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /workspaces/wizard_-language/scanner.c -o CMakeFiles/hi.dir/scanner.c.s
+
 CMakeFiles/hi.dir/value.c.o: CMakeFiles/hi.dir/flags.make
 CMakeFiles/hi.dir/value.c.o: /workspaces/wizard_-language/value.c
 CMakeFiles/hi.dir/value.c.o: CMakeFiles/hi.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/wizard_-language/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building C object CMakeFiles/hi.dir/value.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/wizard_-language/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building C object CMakeFiles/hi.dir/value.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/hi.dir/value.c.o -MF CMakeFiles/hi.dir/value.c.o.d -o CMakeFiles/hi.dir/value.c.o -c /workspaces/wizard_-language/value.c
 
 CMakeFiles/hi.dir/value.c.i: cmake_force
@@ -139,25 +167,45 @@ CMakeFiles/hi.dir/value.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/hi.dir/value.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /workspaces/wizard_-language/value.c -o CMakeFiles/hi.dir/value.c.s
 
+CMakeFiles/hi.dir/vm.c.o: CMakeFiles/hi.dir/flags.make
+CMakeFiles/hi.dir/vm.c.o: /workspaces/wizard_-language/vm.c
+CMakeFiles/hi.dir/vm.c.o: CMakeFiles/hi.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/workspaces/wizard_-language/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building C object CMakeFiles/hi.dir/vm.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/hi.dir/vm.c.o -MF CMakeFiles/hi.dir/vm.c.o.d -o CMakeFiles/hi.dir/vm.c.o -c /workspaces/wizard_-language/vm.c
+
+CMakeFiles/hi.dir/vm.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing C source to CMakeFiles/hi.dir/vm.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /workspaces/wizard_-language/vm.c > CMakeFiles/hi.dir/vm.c.i
+
+CMakeFiles/hi.dir/vm.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling C source to assembly CMakeFiles/hi.dir/vm.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /workspaces/wizard_-language/vm.c -o CMakeFiles/hi.dir/vm.c.s
+
 # Object files for target hi
 hi_OBJECTS = \
 "CMakeFiles/hi.dir/main.c.o" \
 "CMakeFiles/hi.dir/chunk.c.o" \
+"CMakeFiles/hi.dir/compiler.c.o" \
 "CMakeFiles/hi.dir/debug.c.o" \
 "CMakeFiles/hi.dir/memory.c.o" \
-"CMakeFiles/hi.dir/value.c.o"
+"CMakeFiles/hi.dir/scanner.c.o" \
+"CMakeFiles/hi.dir/value.c.o" \
+"CMakeFiles/hi.dir/vm.c.o"
 
 # External object files for target hi
 hi_EXTERNAL_OBJECTS =
 
 hi: CMakeFiles/hi.dir/main.c.o
 hi: CMakeFiles/hi.dir/chunk.c.o
+hi: CMakeFiles/hi.dir/compiler.c.o
 hi: CMakeFiles/hi.dir/debug.c.o
 hi: CMakeFiles/hi.dir/memory.c.o
+hi: CMakeFiles/hi.dir/scanner.c.o
 hi: CMakeFiles/hi.dir/value.c.o
+hi: CMakeFiles/hi.dir/vm.c.o
 hi: CMakeFiles/hi.dir/build.make
 hi: CMakeFiles/hi.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/workspaces/wizard_-language/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking C executable hi"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/workspaces/wizard_-language/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Linking C executable hi"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/hi.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

@@ -153,6 +153,30 @@ chunk.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/hi.dir/build.make CMakeFiles/hi.dir/chunk.c.s
 .PHONY : chunk.c.s
 
+compiler.o: compiler.c.o
+.PHONY : compiler.o
+
+# target to build an object file
+compiler.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hi.dir/build.make CMakeFiles/hi.dir/compiler.c.o
+.PHONY : compiler.c.o
+
+compiler.i: compiler.c.i
+.PHONY : compiler.i
+
+# target to preprocess a source file
+compiler.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hi.dir/build.make CMakeFiles/hi.dir/compiler.c.i
+.PHONY : compiler.c.i
+
+compiler.s: compiler.c.s
+.PHONY : compiler.s
+
+# target to generate assembly for a file
+compiler.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hi.dir/build.make CMakeFiles/hi.dir/compiler.c.s
+.PHONY : compiler.c.s
+
 debug.o: debug.c.o
 .PHONY : debug.o
 
@@ -225,6 +249,30 @@ memory.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/hi.dir/build.make CMakeFiles/hi.dir/memory.c.s
 .PHONY : memory.c.s
 
+scanner.o: scanner.c.o
+.PHONY : scanner.o
+
+# target to build an object file
+scanner.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hi.dir/build.make CMakeFiles/hi.dir/scanner.c.o
+.PHONY : scanner.c.o
+
+scanner.i: scanner.c.i
+.PHONY : scanner.i
+
+# target to preprocess a source file
+scanner.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hi.dir/build.make CMakeFiles/hi.dir/scanner.c.i
+.PHONY : scanner.c.i
+
+scanner.s: scanner.c.s
+.PHONY : scanner.s
+
+# target to generate assembly for a file
+scanner.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hi.dir/build.make CMakeFiles/hi.dir/scanner.c.s
+.PHONY : scanner.c.s
+
 value.o: value.c.o
 .PHONY : value.o
 
@@ -249,6 +297,30 @@ value.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/hi.dir/build.make CMakeFiles/hi.dir/value.c.s
 .PHONY : value.c.s
 
+vm.o: vm.c.o
+.PHONY : vm.o
+
+# target to build an object file
+vm.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hi.dir/build.make CMakeFiles/hi.dir/vm.c.o
+.PHONY : vm.c.o
+
+vm.i: vm.c.i
+.PHONY : vm.i
+
+# target to preprocess a source file
+vm.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hi.dir/build.make CMakeFiles/hi.dir/vm.c.i
+.PHONY : vm.c.i
+
+vm.s: vm.c.s
+.PHONY : vm.s
+
+# target to generate assembly for a file
+vm.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hi.dir/build.make CMakeFiles/hi.dir/vm.c.s
+.PHONY : vm.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -261,6 +333,9 @@ help:
 	@echo "... chunk.o"
 	@echo "... chunk.i"
 	@echo "... chunk.s"
+	@echo "... compiler.o"
+	@echo "... compiler.i"
+	@echo "... compiler.s"
 	@echo "... debug.o"
 	@echo "... debug.i"
 	@echo "... debug.s"
@@ -270,9 +345,15 @@ help:
 	@echo "... memory.o"
 	@echo "... memory.i"
 	@echo "... memory.s"
+	@echo "... scanner.o"
+	@echo "... scanner.i"
+	@echo "... scanner.s"
 	@echo "... value.o"
 	@echo "... value.i"
 	@echo "... value.s"
+	@echo "... vm.o"
+	@echo "... vm.i"
+	@echo "... vm.s"
 .PHONY : help
 
 
