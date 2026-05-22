@@ -17,7 +17,7 @@ static InterpretResult run() {
     uint8_t instruction;
     switch (instruction = READ_BYTE()) {
       case OP_CONSTANT: {
-        Value constant = READ_CONSTANT();
+        Valux constant = READ_CONSTANT();
         printValue(constant);
         printf("\n");
         break;
