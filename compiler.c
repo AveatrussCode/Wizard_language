@@ -4,7 +4,14 @@
 #include "compiler.h"
 #include "scanner.h"
 
-void compile(const char* source) {
+bool compile(const char* source, Chunk* chunk) {
+  initScanner(source);
+  advance();
+  expression();
+  consume(TOKEN_EOF, "Expect end of expression.");
+}
+
+/*bool compile(const char* source, Chunk* chunk) {
   initScanner(source);
   int line = -1;
   for (;;) {
@@ -19,4 +26,4 @@ void compile(const char* source) {
 
     if (token.type == TOKEN_EOF) break;
   }
-}
+}*/
