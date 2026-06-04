@@ -3,7 +3,7 @@
 
 #include "chunk.h"
 
-bool compilar(const char* fuente, Chunk* chunk);
+bool compile(const char* source, Chunk* chunk);
 
 
 #endif
