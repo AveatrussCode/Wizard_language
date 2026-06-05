@@ -11,7 +11,19 @@ typedef struct {
   bool hadError;
   bool panicMode;
 } Parser;
-
+typedef enum {
+  PREC_NONE,
+  PREC_ASSIGNMENT,  // =
+  PREC_OR,          // or
+  PREC_AND,         // and
+  PREC_EQUALITY,    // == !=
+  PREC_COMPARISON,  // < > <= >=
+  PREC_TERM,        // + -
+  PREC_FACTOR,      // * /
+  PREC_UNARY,       // ! -
+  PREC_CALL,        // . ()
+  PREC_PRIMARY
+} Precedence;
 Parser parser;
 
 Chunk* compilingChunk;
@@ -36,7 +48,6 @@ static void errorAt(Token* token, const char* message) {
   fprintf(stderr, ": %s\n", message);
   parser.hadError = true;
 }
-
 static void error(const char* message) {
   errorAt(&parser.previous, message);
 }
@@ -72,7 +83,7 @@ static void emitReturn() {
   emitByte(OP_RETURN);
 }
 
-static uint8_t makeConstant(Value value) {
+static uint8_t makeConstant(Valux value) {
   int constant = addConstant(currentChunk(), value);
   if (constant > UINT8_MAX) {
     error("Too many constants in one chunk.");
@@ -82,7 +93,7 @@ static uint8_t makeConstant(Value value) {
   return (uint8_t)constant;
 }
 
-static void emitConstant(Value value) {
+static void emitConstant(Valux value) {
   emitBytes(OP_CONSTANT, makeConstant(value));
 }
 
@@ -97,6 +108,14 @@ static void number() {
 
 static void expression() {
   // What goes here?
+}
+static void grouping() {
+  expression();
+  consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+}
+
+static void expression() {
+  parsePrecedence(PREC_ASSIGNMENT);
 }
 
 bool compile(const char* source, Chunk* chunk) {
