@@ -1,1 +1,1 @@
-/usr/bin/cc CMakeFiles/hi.dir/main.c.o CMakeFiles/hi.dir/chunk.c.o CMakeFiles/hi.dir/compiler.c.o CMakeFiles/hi.dir/debug.c.o CMakeFiles/hi.dir/memory.c.o CMakeFiles/hi.dir/scanner.c.o CMakeFiles/hi.dir/value.c.o CMakeFiles/hi.dir/vm.c.o -o hi 
+/usr/bin/cc -Wl,--dependency-file=CMakeFiles/hi.dir/link.d CMakeFiles/hi.dir/main.c.o CMakeFiles/hi.dir/chunk.c.o CMakeFiles/hi.dir/compiler.c.o CMakeFiles/hi.dir/debug.c.o CMakeFiles/hi.dir/memory.c.o CMakeFiles/hi.dir/scanner.c.o CMakeFiles/hi.dir/value.c.o CMakeFiles/hi.dir/vm.c.o -o hi
