@@ -1,3 +1,0 @@
-/home/mayurisu/compiladores/compiler/Wizard_language/build/CMakeFiles/hi.dir
-/home/mayurisu/compiladores/compiler/Wizard_language/build/CMakeFiles/edit_cache.dir
-/home/mayurisu/compiladores/compiler/Wizard_language/build/CMakeFiles/rebuild_cache.dir

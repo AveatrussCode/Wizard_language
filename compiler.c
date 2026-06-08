@@ -15,6 +15,8 @@ typedef struct {
   bool hadError;
   bool panicMode;
 } Parser;
+
+
 typedef enum {
   PREC_NONE,
   PREC_ASSIGNMENT,  // =
@@ -38,13 +40,6 @@ typedef struct {
 
 Parser parser;
 
-Chunk* compilingChunk;
-
-static Chunk* currentChunk() {
-  return compilingChunk;
-}
-
-
 static void errorAt(Token* token, const char* message) {
   parser.panicMode = true;
   fprintf(stderr, "[line %d] Error", token->line);
@@ -60,9 +55,21 @@ static void errorAt(Token* token, const char* message) {
   fprintf(stderr, ": %s\n", message);
   parser.hadError = true;
 }
+
 static void error(const char* message) {
   errorAt(&parser.previous, message);
 }
+
+static void errorAtCurrent(const char* message) {
+  errorAt(&parser.current, message);
+}
+
+Chunk* compilingChunk;
+
+static Chunk* currentChunk() {
+  return compilingChunk;
+}
+
 
 static void advance() {
   parser.previous = parser.current;
@@ -94,7 +101,6 @@ static void emitBytes(uint8_t byte1, uint8_t byte2) {
 static void emitReturn() {
   emitByte(OP_RETURN);
 }
-
 static uint8_t makeConstant(Valux value) {
   int constant = addConstant(currentChunk(), value);
   if (constant > UINT8_MAX) {
@@ -105,14 +111,10 @@ static uint8_t makeConstant(Valux value) {
   return (uint8_t)constant;
 }
 
+
 static void emitConstant(Valux value) {
   emitBytes(OP_CONSTANT, makeConstant(value));
 }
-
-static void expression();
-static ParseRule* getRule(TokenType type);
-static void parsePrecedence(Precedence precedence);
-
 
 static void endCompiler() {
   emitReturn();
@@ -122,6 +124,11 @@ static void endCompiler() {
   }
   #endif
 }
+
+static void expression();
+static ParseRule* getRule(TokenType type);
+static void parsePrecedence(Precedence precedence);
+
 static void binary() {
   TokenType operatorType = parser.previous.type;
   ParseRule* rule = getRule(operatorType);
@@ -146,6 +153,19 @@ static void number() {
   emitConstant(value);
 }
 
+static void unary() {
+  TokenType operatorType = parser.previous.type;
+
+  // Compile the operand.
+  parsePrecedence(PREC_UNARY);
+
+
+  // Emit the operator instruction.
+  switch (operatorType) {
+    case TOKEN_MINUS: emitByte(OP_NEGATE); break;
+    default: return; // Unreachable.
+  }
+}
 ParseRule rules[] = {
   [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
   [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
@@ -189,23 +209,6 @@ ParseRule rules[] = {
   [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
 };
 
-
-static void unary() {
-  TokenType operatorType = parser.previous.type;
-
-  // Compile the operand.
-  parsePrecedence(PREC_UNARY);
-
-
-  // Emit the operator instruction.
-  switch (operatorType) {
-    case TOKEN_MINUS: emitByte(OP_NEGATE); break;
-    default: return; // Unreachable.
-  }
-}
-static ParseRule* getRule(TokenType type) {
-  return &rules[type];
-}
 static void parsePrecedence(Precedence precedence) {
   advance();
   ParseFn prefixRule = getRule(parser.previous.type)->prefix;
@@ -221,6 +224,10 @@ static void parsePrecedence(Precedence precedence) {
     infixRule();
   }
 }
+static ParseRule* getRule(TokenType type) {
+  return &rules[type];
+}
+
 static void expression() {
   parsePrecedence(PREC_ASSIGNMENT);
 }
@@ -235,9 +242,6 @@ bool compile(const char* source, Chunk* chunk) {
   consume(TOKEN_EOF, "Expect end of expression.");
   endCompiler();
   return !parser.hadError;
-}
-static void errorAtCurrent(const char* message) {
-  errorAt(&parser.current, message);
 }
 
 /*bool compile(const char* source, Chunk* chunk) {
