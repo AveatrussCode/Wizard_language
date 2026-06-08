@@ -174,8 +174,16 @@ static void unary() {
 
 
   switch (operatorType) {
-    case TOKEN_MINUS: emitByte(OP_NEGATE); break;
-    default: return; // Unreachable.
+    case TOKEN_BANG:
+      emitByte(OP_NOT);
+      break;
+
+    case TOKEN_MINUS:
+      emitByte(OP_NEGATE);
+      break;
+
+    default:
+      return; // Unreachable.
   }
 }
 ParseRule rules[] = {
