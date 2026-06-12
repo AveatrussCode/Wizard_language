@@ -105,7 +105,8 @@ static InterpretResult run() {
         push(NUMBER_VAL(-AS_NUMBER(pop())));
         break;
       case OP_RETURN: {
-        printValue(pop());
+        Valux resultado = pop();
+        printValue(resultado);
         printf("\n");
         return INTERPRET_OK;
       }
