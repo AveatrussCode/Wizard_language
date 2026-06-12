@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.11)
 project(wizard_language)
 
+find_package(raylib REQUIRED)
+
 add_executable(hi
                 main.c
                 chunk.c
@@ -10,4 +12,7 @@ add_executable(hi
                 scanner.c
                 value.c
                 vm.c
+		visualizer.c
 )
+
+target_link_libraries(hi raylib m)

@@ -4,6 +4,7 @@
 #include "compiler.h"
 #include "debug.h"
 #include "vm.h"
+#include "visualizer.h"
 
 VM vm;
 
@@ -124,6 +125,10 @@ InterpretResult interpret(const char* source) {
     freeChunk(&chunk);
     return INTERPRET_COMPILE_ERROR;
   }
+
+  #ifdef VISUALIZE_BYTECODE
+    visualizeChunk(&chunk, "Wizard Bytecode");
+  #endif
 
   vm.chunk = &chunk;
   vm.ip = vm.chunk->code;
