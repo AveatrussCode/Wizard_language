@@ -7,6 +7,7 @@
 #include "visualizer.h"
 
 VM vm;
+static Valux lastResult;
 
 static void resetStack() {
   vm.stackTop = vm.stack;
@@ -105,8 +106,8 @@ static InterpretResult run() {
         push(NUMBER_VAL(-AS_NUMBER(pop())));
         break;
       case OP_RETURN: {
-        Valux resultado = pop();
-        printValue(resultado);
+        lastResult = pop();
+        printValue(lastResult);
         printf("\n");
         return INTERPRET_OK;
       }
@@ -127,14 +128,16 @@ InterpretResult interpret(const char* source) {
     return INTERPRET_COMPILE_ERROR;
   }
 
-  #ifdef VISUALIZE_BYTECODE
-    visualizeChunk(&chunk, "Wizard Bytecode");
-  #endif
-
   vm.chunk = &chunk;
   vm.ip = vm.chunk->code;
 
   InterpretResult result = run();
+
+  #ifdef VISUALIZE_BYTECODE
+    if(result == INTERPRET_OK) {
+        visualizeChunk(&chunk, "Wizard Bytecode", lastResult);
+    }
+  #endif
 
   freeChunk(&chunk);
   return result;

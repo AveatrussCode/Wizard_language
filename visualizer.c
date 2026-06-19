@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include "chunk.h"
 #include "value.h"
+#include "vm.h"
 
 #define COLOR_BG       (Color){24, 24, 32, 255}
 #define COLOR_PANEL    (Color){38, 38, 48, 255}
@@ -51,7 +52,7 @@ static const char* instructionName(uint8_t instruction) {
     }
 }
 
-void visualizeChunk(Chunk* chunk, const char* title) {
+void visualizeChunk(Chunk* chunk, const char* title, Valux resultado) {
     InitWindow(1000, 650, title);
     SetTargetFPS(60);
 
@@ -87,10 +88,12 @@ void visualizeChunk(Chunk* chunk, const char* title) {
 
         Rectangle bytecodePanel = {40, 100, 560, 470};
         Rectangle constantsPanel = {630, 100, 330, 220};
-        Rectangle helpPanel = {630, 350, 330, 220};
+        Rectangle resultPanel = {630, 300, 330, 100};
+        Rectangle helpPanel = {630, 400, 330, 220};
 
         drawPanel(bytecodePanel, "BYTECODE");
         drawPanel(constantsPanel, "CONSTANTES");
+        drawPanel(resultPanel, "RESULTADO");
         drawPanel(helpPanel, "AYUDA");
 
         int y = 170;
@@ -167,11 +170,21 @@ void visualizeChunk(Chunk* chunk, const char* title) {
             cy += 38;
         }
 
-        DrawText("UP / DOWN", 660, 420, 20, COLOR_ACTIVE);
-        DrawText("Mover seleccion", 660, 450, 18, COLOR_TEXT);
+        char resultadoText[64];
+        valueToString(resultado, resultadoText, sizeof(resultadoText));
 
-        DrawText("ESC", 660, 495, 20, COLOR_ACTIVE);
-        DrawText("Cerrar ventana", 660, 525, 18, COLOR_TEXT);
+        DrawRectangleRounded(
+            (Rectangle){650, 370, 290, 30}, 0.15f, 8, (Color){50, 50, 62, 255}
+        );
+
+        DrawText("Valor final:", 660, 345, 18, COLOR_MUTED);
+        DrawText(resultadoText, 665, 378, 20, COLOR_SUCCESS);
+
+        DrawText("UP / DOWN", 660, 485, 20, COLOR_ACTIVE);
+        DrawText("Mover seleccion", 660, 510, 18, COLOR_TEXT);
+
+        DrawText("ESC", 660, 540, 20, COLOR_ACTIVE);
+        DrawText("Cerrar ventana", 660, 560, 18, COLOR_TEXT);
 
         EndDrawing();
     }
