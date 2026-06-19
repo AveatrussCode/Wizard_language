@@ -10,4 +10,5 @@ add_executable(hi
                 scanner.c
                 value.c
                 vm.c
+                object.c
 )
