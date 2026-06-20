@@ -3,3 +3,8 @@ Este proyecto se basa en la creación de un lenguaje de programacion llamado wiz
 Este proyecto esta basado en :
 
 https://craftinginterpreters.com/contents.html
+
+https://www.monogon.net/clox-vis/
+
+
+https://epub.jku.at/download/pdf/12332511.pdf
