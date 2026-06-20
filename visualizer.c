@@ -4,6 +4,7 @@
 #include "raylib.h"
 #include "chunk.h"
 #include "value.h"
+#include "object.h"
 #include "vm.h"
 
 #define COLOR_BG       (Color){24, 24, 32, 255}
@@ -27,6 +28,8 @@ static void valueToString(Valux value, char* buffer, int size) {
         snprintf(buffer, size, AS_BOOL(value) ? "true" : "false");
     } else if (IS_NIL(value)) {
         snprintf(buffer, size, "nil");
+    } else if (IS_STRING(value)) {
+        snprintf(buffer, size, "\"%s\"", AS_CSTRING(value));
     } else {
         snprintf(buffer, size, "unknown");
     }
