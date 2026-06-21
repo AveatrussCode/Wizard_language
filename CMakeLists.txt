@@ -11,4 +11,5 @@ add_executable(hi
                 value.c
                 vm.c
                 object.c
+		table.c
 )
