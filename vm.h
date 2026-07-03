@@ -1,19 +1,27 @@
 #ifndef WIZARD_VM_H
 #define WIZARD_VM_H
 
-#include "chunk.h"
+#include "object.h"
 #include "table.h"
 #include "value.h"
-#define STACK_MAX 256
+
+#define FRAMES_MAX 64
+#define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
+
+typedef struct {
+  ObjFunction* function;
+  uint8_t* ip;
+  Valux* slots;
+} CallFrame;
 
 typedef struct{
-    Chunk* chunk;
-    uint8_t* ip;
-    Valux stack[STACK_MAX];
-    Valux* stackTop;
-    Table globals;
-    Table strings;
-    Obj* objects;
+  CallFrame frames[FRAMES_MAX];
+  int frameCount;
+  Valux stack[STACK_MAX];
+  Valux* stackTop;
+  Table globals;
+  Table strings;
+  Obj* objects;
 
 } VM;
 
