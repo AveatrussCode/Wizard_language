@@ -12,8 +12,9 @@ add_executable(hi
                 scanner.c
                 value.c
                 vm.c
-		object.c
-		visualizer.c
+                object.c
+                visualizer.c
+                table.c
 )
 
 target_link_libraries(hi raylib m)
