@@ -10,10 +10,8 @@
 #include "object.h"
 #include "memory.h"
 #include "vm.h"
-#include "visualizer.h"
 
 VM vm;
-static Valux lastResult;
 
 static Valux clockNative(int argCount, Valux* args) {
   return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
@@ -258,7 +256,7 @@ static void concatenate() {
   push(OBJ_VAL(result));
 }
 
-static InterpretResult run() {
+static InterpretResult runInstruction() {
   CallFrame* frame = &vm.frames[vm.frameCount - 1];
 
 #define READ_BYTE() (*frame->ip++)
@@ -282,7 +280,6 @@ static InterpretResult run() {
       push(valueType(a op b)); \
     } while (false)
 
-  for (;;) {
     #ifdef DEBUG_TRACE_EXECUTION
     printf("          ");
     for (Valux* slot = vm.stack; slot < vm.stackTop; slot++) {
@@ -529,7 +526,8 @@ static InterpretResult run() {
         defineMethod(READ_STRING());
         break;
     }
-  }
+
+  return INTERPRET_RUNNING;
 
 #undef READ_BYTE
 #undef READ_SHORT
@@ -539,21 +537,27 @@ static InterpretResult run() {
 }
 
 InterpretResult interpret(const char* source) {
+  InterpretResult result = beginInterpret(source);
+  while (result == INTERPRET_RUNNING) result = stepVM();
+  return result;
+}
+
+bool vmIsRunning(void) {
+  return vm.frameCount > 0;
+}
+
+InterpretResult beginInterpret(const char* source) {
+  if (vmIsRunning()) resetStack();
   ObjFunction* function = compile(source);
   if (function == NULL) return INTERPRET_COMPILE_ERROR;
   push(OBJ_VAL(function));
   ObjClosure* closure = newClosure(function);
   pop();
   push(OBJ_VAL(closure));
-  call(closure, 0);
+  return call(closure, 0) ? INTERPRET_RUNNING : INTERPRET_RUNTIME_ERROR;
+}
 
-  InterpretResult result = run();
-
-  #ifdef VISUALIZE_BYTECODE
-    if(result == INTERPRET_OK) {
-        visualizeChunk(&closure->function->chunk, "Wizard Bytecode", lastResult);
-    }
-  #endif
-
-  return result;
+InterpretResult stepVM(void) {
+  if (!vmIsRunning()) return INTERPRET_OK;
+  return runInstruction();
 }

@@ -34,6 +34,7 @@ typedef struct{
 } VM;
 
 typedef enum {
+  INTERPRET_RUNNING,
   INTERPRET_OK,
   INTERPRET_COMPILE_ERROR,
   INTERPRET_RUNTIME_ERROR
@@ -45,6 +46,10 @@ extern VM vm;
 void initVM();
 void freeVM();
 InterpretResult interpret(const char* source);
+/* Starts and advances an execution without blocking the UI event loop. */
+InterpretResult beginInterpret(const char* source);
+InterpretResult stepVM(void);
+bool vmIsRunning(void);
 void push(Valux value);
 Valux pop();
 

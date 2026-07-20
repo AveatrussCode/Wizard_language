@@ -5,6 +5,7 @@
 #include "chunk.h"
 #include "debug.h"
 #include "vm.h"
+#include "wizard_ui.h"
 
 static void repl() {
     char line[1024];
@@ -52,9 +53,15 @@ static char* readFile(const char* path) {
     return buffer;
 }
 
-static void runFile(const char* path) {
+static void runFile(const char* path, bool showUi) {
     char* source = readFile(path);
-    InterpretResult result = interpret(source);
+    InterpretResult result;
+    if (showUi) {
+        result = wizardUIRun(source, "Wizard - clox Workbench") == 0
+          ? INTERPRET_OK : INTERPRET_RUNTIME_ERROR;
+    } else {
+        result = interpret(source);
+    }
     free(source); 
 
     if (result == INTERPRET_COMPILE_ERROR) exit(65);
@@ -68,9 +75,11 @@ int main(int argc, const char * argv[]){
     if (argc == 1) {
         repl();
     } else if (argc == 2) {
-        runFile(argv[1]);
+        runFile(argv[1], false);
+    } else if (argc == 3 && strcmp(argv[1], "--ui") == 0) {
+        runFile(argv[2], true);
     } else {
-        fprintf(stderr, "Usage: wizard [path]\n");
+        fprintf(stderr, "Usage: wizard [path | --ui path]\n");
         exit(64);
     }
     
