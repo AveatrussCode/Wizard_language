@@ -1,9 +1,5 @@
-var x = "global";
-fun outer() {
-  var x = "outer";
-  fun inner() {
-    print x;
-  }
-  inner();
+fun saludar(nombre) {
+    print "Hola " + nombre;
 }
-outer();
+
+saludar("David");
