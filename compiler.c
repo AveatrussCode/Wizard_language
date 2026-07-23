@@ -85,17 +85,14 @@ static Chunk* currentChunk() {
 
 static void errorAt(Token* token, const char* message) {
   parser.panicMode = true;
-  fprintf(stderr, "[line %d] Error", token->line);
-
   if (token->type == TOKEN_EOF) {
-    fprintf(stderr, " at end");
+    vmReportError("[line %d] Error at end: %s\n", token->line, message);
   } else if (token->type == TOKEN_ERROR) {
-    // Nothing.
+    vmReportError("[line %d] Error: %s\n", token->line, message);
   } else {
-    fprintf(stderr, " at '%.*s'", token->length, token->start);
+    vmReportError("[line %d] Error at '%.*s': %s\n", token->line,
+                  token->length, token->start, message);
   }
-
-  fprintf(stderr, ": %s\n", message);
   parser.hadError = true;
 }
 

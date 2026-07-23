@@ -13,6 +13,44 @@
 
 VM vm;
 
+static VMOutputFn outputCallback = NULL;
+static VMErrorFn errorCallback = NULL;
+
+void vmSetOutputCallback(VMOutputFn callback) { outputCallback = callback; }
+void vmSetErrorCallback(VMErrorFn callback) { errorCallback = callback; }
+
+static void vmEmitOutput(const char* text) {
+  if (outputCallback != NULL) outputCallback(text);
+  else fputs(text, stdout);
+}
+
+static void vmEmitError(const char* text) {
+  if (errorCallback != NULL) errorCallback(text);
+  else fputs(text, stderr);
+}
+
+void vmReportError(const char* format, ...) {
+  char text[1024];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(text, sizeof(text), format, args);
+  va_end(args);
+  vmEmitError(text);
+}
+
+static void valueToOutputText(Valux value, char* out, size_t size) {
+  if (IS_NIL(value)) snprintf(out, size, "nil");
+  else if (IS_BOOL(value)) snprintf(out, size, AS_BOOL(value) ? "true" : "false");
+  else if (IS_NUMBER(value)) snprintf(out, size, "%g", AS_NUMBER(value));
+  else if (IS_STRING(value)) snprintf(out, size, "%s", AS_CSTRING(value));
+  else if (IS_FUNCTION(value)) snprintf(out, size, "<fn %s>", AS_FUNCTION(value)->name ? AS_FUNCTION(value)->name->chars : "script");
+  else if (IS_CLOSURE(value)) snprintf(out, size, "<fn %s>", AS_CLOSURE(value)->function->name ? AS_CLOSURE(value)->function->name->chars : "script");
+  else if (IS_CLASS(value)) snprintf(out, size, "%s", AS_CLASS(value)->name->chars);
+  else if (IS_INSTANCE(value)) snprintf(out, size, "%s instance", AS_INSTANCE(value)->klass->name->chars);
+  else if (IS_NATIVE(value)) snprintf(out, size, "<native fn>");
+  else snprintf(out, size, "<object>");
+}
+
 static Valux clockNative(int argCount, Valux* args) {
   return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
 }
@@ -24,22 +62,21 @@ static void resetStack() {
 
 }
 static void runtimeError(const char* format, ...) {
+  char text[1024];
   va_list args;
   va_start(args, format);
-  vfprintf(stderr, format, args);
+  vsnprintf(text, sizeof(text), format, args);
   va_end(args);
-  fputs("\n", stderr);
+  vmReportError("%s\n", text);
 
   for (int i = vm.frameCount - 1; i >= 0; i--) {
     CallFrame* frame = &vm.frames[i];
     ObjFunction* function = frame->closure->function;
     size_t instruction = frame->ip - function->chunk.code - 1;
-    fprintf(stderr, "[line %d] in ", 
-            function->chunk.lines[instruction]);
     if (function->name == NULL) {
-      fprintf(stderr, "script\n");
+      vmReportError("[line %d] in script\n", function->chunk.lines[instruction]);
     } else {
-      fprintf(stderr, "%s()\n", function->name->chars);
+      vmReportError("[line %d] in %s()\n", function->chunk.lines[instruction], function->name->chars);
     }
   }
 
@@ -52,6 +89,12 @@ static void defineNative(const char* name, NativeFn function) {
   tableSet(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
   pop();
   pop();
+}
+
+static void resetGlobalsForProgram(void) {
+  freeTable(&vm.globals);
+  initTable(&vm.globals);
+  defineNative("clock", clockNative);
 }
 
 void initVM(){
@@ -69,6 +112,7 @@ void initVM(){
 
   vm.initString = NULL;
   vm.initString = copyString("init", 4);
+  vm.preparedFunction = NULL;
 
   defineNative("clock", clockNative);
 }
@@ -426,8 +470,10 @@ static InterpretResult runInstruction() {
         push(NUMBER_VAL(-AS_NUMBER(pop())));
         break;
       case OP_PRINT: {
-        printValue(pop());
-        printf("\n");
+        char text[512];
+        valueToOutputText(pop(), text, sizeof(text));
+        vmEmitOutput(text);
+        vmEmitOutput("\n");
         break;
       }
       case OP_JUMP: {
@@ -552,6 +598,31 @@ InterpretResult beginInterpret(const char* source) {
   if (function == NULL) return INTERPRET_COMPILE_ERROR;
   push(OBJ_VAL(function));
   ObjClosure* closure = newClosure(function);
+  pop();
+  push(OBJ_VAL(closure));
+  return call(closure, 0) ? INTERPRET_RUNNING : INTERPRET_RUNTIME_ERROR;
+}
+
+InterpretResult vmCompileSource(const char* source) {
+  if (vmIsRunning()) resetStack();
+  vm.preparedFunction = NULL;
+  ObjFunction* function = compile(source);
+  if (function == NULL) return INTERPRET_COMPILE_ERROR;
+  vm.preparedFunction = function;
+  return INTERPRET_OK;
+}
+
+bool vmHasPreparedProgram(void) {
+  return vm.preparedFunction != NULL;
+}
+
+InterpretResult vmRestartPrepared(void) {
+  if (vm.preparedFunction == NULL) return INTERPRET_COMPILE_ERROR;
+  resetStack();
+  /* A visual restart begins with the same clean global environment. */
+  resetGlobalsForProgram();
+  push(OBJ_VAL(vm.preparedFunction));
+  ObjClosure* closure = newClosure(vm.preparedFunction);
   pop();
   push(OBJ_VAL(closure));
   return call(closure, 0) ? INTERPRET_RUNNING : INTERPRET_RUNTIME_ERROR;

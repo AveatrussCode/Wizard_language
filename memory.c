@@ -177,6 +177,7 @@ static void markRoots() {
   markTable(&vm.globals);
   markCompilerRoots();
   markObject((Obj*)vm.initString);
+  markObject((Obj*)vm.preparedFunction);
 }
 
 static void traceReferences() {
@@ -240,4 +241,3 @@ void freeObjects() {
 
   free(vm.grayStack);
 }
-

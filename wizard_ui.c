@@ -5,12 +5,82 @@
 #include <GL/gl.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #include "chunk.h"
 #include "memory.h"
 #include "object.h"
 #include "vm.h"
 #include "wizard_ui.h"
+
+#define SOURCE_EDITOR_CAPACITY (64 * 1024)
+#define UI_LOG_CAPACITY (16 * 1024)
+
+typedef enum {
+  UI_EDITING,
+  UI_COMPILED,
+  UI_RUNNING,
+  UI_PAUSED,
+  UI_HALTED,
+  UI_ERROR
+} UIState;
+
+typedef struct {
+  char text[SOURCE_EDITOR_CAPACITY];
+  bool modified;
+} SourceEditor;
+
+typedef struct {
+  char output[UI_LOG_CAPACITY];
+  char errors[UI_LOG_CAPACITY];
+} UILog;
+
+typedef struct {
+  bool valid;
+  uint8_t opcode;
+  char operand[128];
+  char firstStackValue[128];
+  char secondStackValue[128];
+  char result[128];
+} InstructionSnapshot;
+
+static UILog* activeLog = NULL;
+
+static void appendLog(char* destination, const char* text) {
+  size_t used = strlen(destination);
+  if (used >= UI_LOG_CAPACITY - 1) return;
+  strncat(destination, text, UI_LOG_CAPACITY - used - 1);
+}
+
+static void captureOutput(const char* text) {
+  if (activeLog != NULL) appendLog(activeLog->output, text);
+}
+
+static void captureError(const char* text) {
+  if (activeLog != NULL) appendLog(activeLog->errors, text);
+}
+
+static const char* uiStateName(UIState state) {
+  switch (state) {
+    case UI_EDITING: return "Not Compiled";
+    case UI_COMPILED: return "Compiled";
+    case UI_RUNNING: return "Running";
+    case UI_PAUSED: return "Paused";
+    case UI_HALTED: return "Halted";
+    case UI_ERROR: return "Error";
+  }
+  return "Unknown";
+}
+
+static UIState stateFromResult(InterpretResult result) {
+  switch (result) {
+    case INTERPRET_OK: return UI_HALTED;
+    case INTERPRET_COMPILE_ERROR:
+    case INTERPRET_RUNTIME_ERROR: return UI_ERROR;
+    case INTERPRET_RUNNING: return UI_PAUSED;
+  }
+  return UI_ERROR;
+}
 
 static const char* opcodeName(uint8_t code) {
   static const char* names[] = {
@@ -57,19 +127,73 @@ static const char* objectType(ObjType type) {
   return names[type];
 }
 
-static void placeWindow(float x, float y, float width, float height) {
-  igSetNextWindowPos((ImVec2){x, y}, ImGuiCond_FirstUseEver, (ImVec2){0, 0});
-  igSetNextWindowSize((ImVec2){width, height}, ImGuiCond_FirstUseEver);
-}
+static void snapshotInstructionBefore(InstructionSnapshot* snapshot) {
+  memset(snapshot, 0, sizeof(*snapshot));
+  if (!vmIsRunning()) return;
 
-static void drawBytecode(void) {
-  placeWindow(10, 100, 580, 430);
-  igBegin("Bytecode / Chunk", NULL, 0);
-  if (!vmIsRunning()) { igText("No active call frame."); igEnd(); return; }
   CallFrame* frame = &vm.frames[vm.frameCount - 1];
   Chunk* chunk = &frame->closure->function->chunk;
-  int current = (int)(frame->ip - chunk->code);
-  igText("Function: %s   IP: %04d   %d bytes", frame->closure->function->name ? frame->closure->function->name->chars : "<script>", current, chunk->count);
+  int offset = (int)(frame->ip - chunk->code);
+  if (offset < 0 || offset >= chunk->count) return;
+
+  snapshot->valid = true;
+  snapshot->opcode = chunk->code[offset];
+  int size = instructionSize(chunk, offset);
+  if (size == 2) {
+    uint8_t operand = chunk->code[offset + 1];
+    switch (snapshot->opcode) {
+      case OP_CONSTANT: case OP_GET_GLOBAL: case OP_DEFINE_GLOBAL:
+      case OP_SET_GLOBAL: case OP_GET_PROPERTY: case OP_SET_PROPERTY:
+      case OP_GET_SUPER: case OP_CLASS: case OP_METHOD:
+        valueToText(chunk->constants.values[operand], snapshot->operand,
+                    sizeof(snapshot->operand));
+        break;
+      default:
+        snprintf(snapshot->operand, sizeof(snapshot->operand), "%u", operand);
+        break;
+    }
+  }
+
+  int stackCount = (int)(vm.stackTop - vm.stack);
+  if (stackCount > 0) valueToText(vm.stack[stackCount - 1], snapshot->secondStackValue,
+                                  sizeof(snapshot->secondStackValue));
+  if (stackCount > 1) valueToText(vm.stack[stackCount - 2], snapshot->firstStackValue,
+                                  sizeof(snapshot->firstStackValue));
+}
+
+static void snapshotInstructionAfter(InstructionSnapshot* snapshot) {
+  if (!snapshot->valid) return;
+  int stackCount = (int)(vm.stackTop - vm.stack);
+  if (stackCount > 0) valueToText(vm.stack[stackCount - 1], snapshot->result,
+                                  sizeof(snapshot->result));
+}
+
+static InterpretResult stepWithSnapshot(InstructionSnapshot* snapshot) {
+  snapshotInstructionBefore(snapshot);
+  InterpretResult result = stepVM();
+  snapshotInstructionAfter(snapshot);
+  return result;
+}
+
+static void drawBytecode(UIState state) {
+  if (state == UI_EDITING || !vmHasPreparedProgram()) {
+    igText("Compile the source to generate bytecode.");
+    return;
+  }
+
+  ObjFunction* function = vm.preparedFunction;
+  int current = -1;
+  if (vmIsRunning()) {
+    CallFrame* frame = &vm.frames[vm.frameCount - 1];
+    function = frame->closure->function;
+    current = (int)(frame->ip - function->chunk.code);
+  }
+  Chunk* chunk = &function->chunk;
+  if (current >= 0) {
+    igText("Function: %s   IP: %04d   %d bytes", function->name ? function->name->chars : "<script>", current, chunk->count);
+  } else {
+    igText("Function: %s   execution complete   %d bytes", function->name ? function->name->chars : "<script>", chunk->count);
+  }
   igSeparator();
   for (int offset = 0; offset < chunk->count; offset += instructionSize(chunk, offset)) {
     bool active = offset == current;
@@ -81,12 +205,60 @@ static void drawBytecode(void) {
     igText("%s %04d  line %-4d %-20s%s", active ? ">" : " ", offset, chunk->lines[offset], opcodeName(op), operand);
     if (active) igPopStyleColor(1);
   }
-  igEnd();
+}
+
+static void drawInstructionInspector(const InstructionSnapshot* snapshot) {
+  if (!snapshot->valid) {
+    igText("Step the VM to inspect an instruction.");
+    return;
+  }
+
+  igText("Last executed instruction");
+  igSeparator();
+  igText("%s", opcodeName(snapshot->opcode));
+  switch (snapshot->opcode) {
+    case OP_CONSTANT:
+      igText("Operand: %s", snapshot->operand);
+      igText("Effect: pushes the constant onto the VM stack.");
+      break;
+    case OP_ADD: case OP_SUBTRACT: case OP_MULTIPLY: case OP_DIVIDE: {
+      const char* symbol = snapshot->opcode == OP_ADD ? "+" :
+                           snapshot->opcode == OP_SUBTRACT ? "-" :
+                           snapshot->opcode == OP_MULTIPLY ? "*" : "/";
+      igText("Stack effect:");
+      igText("%s %s %s", snapshot->firstStackValue, symbol, snapshot->secondStackValue);
+      igText("Result: %s", snapshot->result);
+      break;
+    }
+    case OP_NEGATE:
+      igText("Operand: %s", snapshot->secondStackValue);
+      igText("Result: %s", snapshot->result);
+      break;
+    case OP_PRINT:
+      igText("Value: %s", snapshot->secondStackValue);
+      igText("Effect: removes the value from the stack and writes it to output.");
+      break;
+    case OP_GET_GLOBAL:
+      igText("Variable: %s", snapshot->operand);
+      igText("Value pushed: %s", snapshot->result);
+      break;
+    case OP_DEFINE_GLOBAL:
+      igText("Variable: %s", snapshot->operand);
+      igText("Value stored: %s", snapshot->secondStackValue);
+      igText("Effect: defines the global and removes the value from the stack.");
+      break;
+    case OP_SET_GLOBAL:
+      igText("Variable: %s", snapshot->operand);
+      igText("Value: %s", snapshot->secondStackValue);
+      break;
+    default:
+      if (snapshot->operand[0] != '\0') igText("Operand: %s", snapshot->operand);
+      igText("This instruction's detailed explanation is not available yet.");
+      break;
+  }
 }
 
 static void drawStack(void) {
-  placeWindow(600, 100, 400, 430);
-  igBegin("VM Stack", NULL, 0);
   int count = (int)(vm.stackTop - vm.stack);
   igText("%d / %d slots", count, STACK_MAX);
   igSeparator();
@@ -94,13 +266,9 @@ static void drawStack(void) {
     char text[128]; valueToText(vm.stack[i], text, sizeof(text));
     igText("[%03d] %s", i, text);
   }
-  igEnd();
 }
 
-static void drawTable(const char* title, Table* table) {
-  if (table == &vm.globals) placeWindow(10, 540, 700, 340);
-  else placeWindow(720, 540, 710, 340);
-  igBegin(title, NULL, 0);
+static void drawTable(Table* table) {
   igText("entries: %d   capacity: %d", table->count, table->capacity);
   igSeparator();
   for (int i = 0; i < table->capacity; i++) {
@@ -109,12 +277,9 @@ static void drawTable(const char* title, Table* table) {
     char value[128]; valueToText(entry->value, value, sizeof(value));
     igText("[%03d] %s = %s", i, entry->key->chars, value);
   }
-  igEnd();
 }
 
 static void drawHeap(void) {
-  placeWindow(1010, 320, 420, 210);
-  igBegin("Heap / Garbage Collector", NULL, 0);
   igText("allocated: %zu bytes   next collection: %zu", vm.bytesAllocated, vm.nextGC);
   if (igButton("Collect now", (ImVec2){0, 0})) collectGarbage();
   igSeparator();
@@ -124,25 +289,24 @@ static void drawHeap(void) {
     n++;
   }
   igSeparator(); igText("%d linked objects (* = marked during active GC)", n);
-  igEnd();
 }
 
-static void drawUpvaluesAndFrames(void) {
-  placeWindow(1010, 100, 420, 210);
-  igBegin("Call Frames / Upvalues", NULL, 0);
+static void drawFrames(void) {
   for (int i = 0; i < vm.frameCount; i++) {
     CallFrame* frame = &vm.frames[i];
     ObjFunction* fn = frame->closure->function;
     igText("frame %d  %s  ip=%td  slots=%td", i, fn->name ? fn->name->chars : "<script>",
       frame->ip - fn->chunk.code, frame->slots - vm.stack);
   }
-  igSeparator();
+  if (vm.frameCount == 0) igText("No active call frames.");
+}
+
+static void drawUpvalues(void) {
   if (vm.openUpvalues == NULL) igText("Open upvalues: none");
   for (ObjUpvalue* upvalue = vm.openUpvalues; upvalue != NULL; upvalue = upvalue->next) {
     char value[96]; valueToText(*upvalue->location, value, sizeof(value));
     igText("upvalue @%p -> stack[%td] = %s", (void*)upvalue, upvalue->location - vm.stack, value);
   }
-  igEnd();
 }
 
 static void applyStyle(void) {
@@ -175,32 +339,169 @@ int wizardUIRun(const char* source, const char* title) {
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init("#version 130");
 
-  InterpretResult result = beginInterpret(source);
+  SourceEditor editor = {{0}, false};
+  UILog log = {{0}, {0}};
+  InstructionSnapshot instruction = {0};
+  if (source != NULL) {
+    strncpy(editor.text, source, sizeof(editor.text) - 1);
+    editor.text[sizeof(editor.text) - 1] = '\0';
+  }
+
+  /* Opening the workbench never compiles or runs the initial text. */
+  InterpretResult result = INTERPRET_OK;
+  UIState state = UI_EDITING;
   bool autoplay = false;
   int stepsPerFrame = 1;
+  activeLog = &log;
+  vmSetOutputCallback(captureOutput);
+  vmSetErrorCallback(captureError);
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     igNewFrame();
 
-    placeWindow(10, 10, 1420, 80);
-    igBegin("Wizard Control Console", NULL, ImGuiWindowFlags_NoCollapse);
-    igText("Status: %s", result == INTERPRET_RUNNING ? (autoplay ? "running" : "paused") : (result == INTERPRET_OK ? "halted" : "error"));
-    if (igButton("Step instruction", (ImVec2){0, 0}) && result == INTERPRET_RUNNING) result = stepVM();
+    int windowWidth, windowHeight;
+    glfwGetWindowSize(window, &windowWidth, &windowHeight);
+    igSetNextWindowPos((ImVec2){0, 0}, ImGuiCond_Always, (ImVec2){0, 0});
+    igSetNextWindowSize((ImVec2){(float)windowWidth, (float)windowHeight}, ImGuiCond_Always);
+    igBegin("WIZARD VM VISUALIZER", NULL,
+            ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
+    igText("WIZARD VM VISUALIZER");
+    igSameLine(0, 20);
+    if (igButton("Compile", (ImVec2){0, 0})) {
+      autoplay = false;
+      log.output[0] = '\0';
+      log.errors[0] = '\0';
+      result = vmCompileSource(editor.text);
+      if (result == INTERPRET_OK) result = vmRestartPrepared();
+      state = result == INTERPRET_RUNNING ? UI_COMPILED : stateFromResult(result);
+      instruction.valid = false;
+      editor.modified = false;
+    }
     igSameLine(0, -1);
-    if (igButton(autoplay ? "Pause" : "Run", (ImVec2){0, 0}) && result == INTERPRET_RUNNING) autoplay = !autoplay;
+    if (state == UI_COMPILED || state == UI_PAUSED) {
+      if (igButton("Step", (ImVec2){0, 0}) && result == INTERPRET_RUNNING) {
+        result = stepWithSnapshot(&instruction);
+        state = stateFromResult(result);
+      }
+      igSameLine(0, -1);
+      if (igButton("Run", (ImVec2){0, 0}) && result == INTERPRET_RUNNING) {
+        autoplay = true;
+        state = UI_RUNNING;
+      }
+      igSameLine(0, -1);
+    } else if (state == UI_RUNNING) {
+      if (igButton("Pause", (ImVec2){0, 0})) {
+        autoplay = false;
+        state = UI_PAUSED;
+      }
+      igSameLine(0, -1);
+    }
+    if ((state == UI_COMPILED || state == UI_PAUSED || state == UI_RUNNING || state == UI_HALTED) &&
+        igButton("Restart", (ImVec2){0, 0})) {
+      /* Restart reuses the already retained bytecode. */
+      autoplay = false;
+      result = vmRestartPrepared();
+      state = result == INTERPRET_RUNNING ? UI_COMPILED : stateFromResult(result);
+      instruction.valid = false;
+    }
     igSameLine(0, -1);
-    if (igButton("Restart", (ImVec2){0, 0})) { result = beginInterpret(source); autoplay = false; }
-    igSameLine(0, -1); igSliderInt("steps/frame", &stepsPerFrame, 1, 100, "%d", 0);
-    igText("Single-pass clox observer | UI pacing controls VM execution.");
-    igEnd();
+    igText("Status: %s", uiStateName(state));
+    if (state == UI_RUNNING) {
+      igSameLine(0, -1);
+      igSliderInt("Speed", &stepsPerFrame, 1, 100, "%d", 0);
+    }
 
     if (autoplay && result == INTERPRET_RUNNING) {
-      for (int i = 0; i < stepsPerFrame && result == INTERPRET_RUNNING; i++) result = stepVM();
+      for (int i = 0; i < stepsPerFrame && result == INTERPRET_RUNNING; i++) {
+        result = stepWithSnapshot(&instruction);
+      }
+      if (result != INTERPRET_RUNNING) {
+        autoplay = false;
+        state = stateFromResult(result);
+      }
     }
-    drawBytecode(); drawStack(); drawTable("Globals Hash Table", &vm.globals);
-    drawTable("String Interning Table", &vm.strings); drawHeap(); drawUpvaluesAndFrames();
+
+    igSeparator();
+    ImVec2 available = igGetContentRegionAvail();
+    float gap = 8.0f;
+    float columnWidth = (available.x - gap) * 0.5f;
+    float topHeight = available.y * 0.42f;
+    if (igBeginChild_Str("SourcePanel", (ImVec2){columnWidth, topHeight}, ImGuiChildFlags_Borders, 0)) {
+      igText("SOURCE CODE");
+      igSeparator();
+      igText("Edit the Lox program, then press Compile.");
+      ImVec2 editorSize = igGetContentRegionAvail();
+      if (editor.modified) editorSize.y -= 22.0f;
+      if (igInputTextMultiline("##source", editor.text, sizeof(editor.text), editorSize, 0, NULL, NULL)) {
+        editor.modified = true;
+        autoplay = false;
+        if (state != UI_EDITING) state = UI_EDITING;
+      }
+      if (editor.modified) igText("Code modified. Compile to update VM.");
+    }
+    igEndChild();
+    igSameLine(0, gap);
+    if (igBeginChild_Str("BytecodePanel", (ImVec2){columnWidth, topHeight}, ImGuiChildFlags_Borders, 0)) {
+      igText("BYTECODE");
+      igSeparator();
+      drawBytecode(state);
+    }
+    igEndChild();
+
+    available = igGetContentRegionAvail();
+    float middleHeight = available.y * 0.42f;
+    if (igBeginChild_Str("StackPanel", (ImVec2){columnWidth, middleHeight}, ImGuiChildFlags_Borders, 0)) {
+      igText("VM STACK");
+      igSeparator();
+      drawStack();
+    }
+    igEndChild();
+    igSameLine(0, gap);
+    if (igBeginChild_Str("InspectorPanel", (ImVec2){columnWidth, middleHeight}, ImGuiChildFlags_Borders, 0)) {
+      igText("INSTRUCTION INSPECTOR");
+      igSeparator();
+      drawInstructionInspector(&instruction);
+    }
+    igEndChild();
+
+    available = igGetContentRegionAvail();
+    float outputHeight = available.y * 0.40f;
+    if (igBeginChild_Str("OutputPanel", (ImVec2){0, outputHeight}, ImGuiChildFlags_Borders, 0)) {
+      igText("OUTPUT / ERRORS");
+      igSeparator();
+      if (log.output[0] == '\0' && log.errors[0] == '\0') {
+        igText("Program output and compiler/runtime errors will appear here.");
+      } else {
+        if (log.output[0] != '\0') {
+          igText("OUTPUT");
+          igTextUnformatted(log.output, NULL);
+        }
+        if (log.errors[0] != '\0') {
+          if (log.output[0] != '\0') igSeparator();
+          igText("ERROR");
+          igTextUnformatted(log.errors, NULL);
+        }
+      }
+    }
+    igEndChild();
+
+    if (igBeginChild_Str("AdvancedPanel", (ImVec2){0, 0}, ImGuiChildFlags_Borders, 0)) {
+      igText("ADVANCED PANELS");
+      if (igBeginTabBar("AdvancedTabs", 0)) {
+        if (igBeginTabItem("Frames", NULL, 0)) { drawFrames(); igEndTabItem(); }
+        if (igBeginTabItem("Upvalues", NULL, 0)) { drawUpvalues(); igEndTabItem(); }
+        if (igBeginTabItem("Globals", NULL, 0)) { drawTable(&vm.globals); igEndTabItem(); }
+        if (igBeginTabItem("Strings", NULL, 0)) { drawTable(&vm.strings); igEndTabItem(); }
+        if (igBeginTabItem("Heap / GC", NULL, 0)) { drawHeap(); igEndTabItem(); }
+        igEndTabBar();
+      }
+    }
+    igEndChild();
+
+    igEnd();
 
     igRender();
     int width, height; glfwGetFramebufferSize(window, &width, &height);
@@ -209,6 +510,9 @@ int wizardUIRun(const char* source, const char* title) {
     ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
     glfwSwapBuffers(window);
   }
+  vmSetOutputCallback(NULL);
+  vmSetErrorCallback(NULL);
+  activeLog = NULL;
   ImGui_ImplOpenGL3_Shutdown(); ImGui_ImplGlfw_Shutdown(); igDestroyContext(NULL);
   glfwDestroyWindow(window); glfwTerminate();
   return (result == INTERPRET_COMPILE_ERROR || result == INTERPRET_RUNTIME_ERROR) ? 1 : 0;

@@ -31,7 +31,13 @@ typedef struct{
   int grayCapacity;
   Obj** grayStack;
 
+  /* Keeps the UI's most recently compiled program alive across restarts. */
+  ObjFunction* preparedFunction;
+
 } VM;
+
+typedef void (*VMOutputFn)(const char* text);
+typedef void (*VMErrorFn)(const char* text);
 
 typedef enum {
   INTERPRET_RUNNING,
@@ -50,6 +56,13 @@ InterpretResult interpret(const char* source);
 InterpretResult beginInterpret(const char* source);
 InterpretResult stepVM(void);
 bool vmIsRunning(void);
+/* UI-oriented API: compile once, then restart the retained bytecode. */
+InterpretResult vmCompileSource(const char* source);
+InterpretResult vmRestartPrepared(void);
+bool vmHasPreparedProgram(void);
+void vmSetOutputCallback(VMOutputFn callback);
+void vmSetErrorCallback(VMErrorFn callback);
+void vmReportError(const char* format, ...);
 void push(Valux value);
 Valux pop();
 
